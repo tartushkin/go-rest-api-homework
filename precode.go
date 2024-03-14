@@ -43,10 +43,11 @@ var tasks = map[string]Task{
 
 // Ниже напишите обработчики для каждого эндпоинта
 // ...
-func getTask(w http.ResponseWriter, r *http.Request) {
+func getTasks(w http.ResponseWriter, r *http.Request) {
 	// сериализуем данные из слайса tasks
 	resp, err := json.Marshal(tasks)
 	if err != nil {
+		fmt.Println("Ошибка:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -80,7 +81,7 @@ func postTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func getTasks(w http.ResponseWriter, r *http.Request) {
+func getTask(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	task, ok := tasks[id]
@@ -105,12 +106,10 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 
 	_, err := tasks[id]
 	if !err {
-		http.Error(w, "ID не найден", http.StatusNoContent)
+		http.Error(w, "ID не найден", http.StatusNotFound)
 		return
 	}
 	delete(tasks, id)
-	return
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
@@ -120,9 +119,9 @@ func main() {
 	r := chi.NewRouter()
 
 	//регестрируем эндпоинт /tasks c методом Get для которого  используется обработчик getTask
-	r.Get("/tasks", getTask)
+	r.Get("/tasks", getTasks)
 	r.Post("/tasks", postTask)
-	r.Get("/tasks/{id}", getTasks)
+	r.Get("/tasks/{id}", getTask)
 	r.Delete("/tasks/{id}", deleteTask)
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
